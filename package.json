@@ -1,0 +1,9 @@
+{
+  "name": "quickfix-mvp",
+  "private": true,
+  "scripts": {
+    "dev:customer": "npm --prefix customer-app run dev",
+    "dev:owner": "npm --prefix owner-panel run dev",
+    "dev:server": "node server/src/index.js"
+  }
+}
