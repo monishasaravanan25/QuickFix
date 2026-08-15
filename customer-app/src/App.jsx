@@ -2,8 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Routes, Route, Link, useNavigate, useLocation, useParams } from 'react-router-dom';
 import { buildBookingPayload } from './lib/booking';
 
-const API_BASE = 'http://127.0.0.1:4000';
-
+const API_BASE = 'https://quickfix-serve.onrender.com';
 function Home() {
   const [phone, setPhone] = useState('');
   const [name, setName] = useState('');
