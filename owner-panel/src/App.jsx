@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Routes, Route, Link, useNavigate } from 'react-router-dom';
 
-const API_BASE = 'http://127.0.0.1:4000';
+const API_BASE = 'https://quickfix-serve.onrender.com';
 
 function authHeader() {
   const auth = localStorage.getItem('quickfix-owner');
