@@ -1,452 +1,423 @@
-import { useEffect, useState } from 'react';
-import { Routes, Route, Link, useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
+import './styles.css';
 
-const API_BASE = 'https://quickfix-serve.onrender.com';
+// Hero Banner Component with Logo
+const HeroBanner = () => (
+  <div className="hero-banner">
+    <div className="hero-content">
+      {/* LOGO - Replace /quickfix-logo.png with your logo file path */}
+      <div className="hero-logo">
+        <img src="/quickfix-logo.png" alt="QuickFix Logo" onError={(e) => {
+          e.target.style.display = 'none';
+        }} />
+      </div>
+      
+      <h1 className="hero-quickfix">QUICKFIX</h1>
+      <h2 className="hero-subtitle">Home services, made easy.</h2>
+      <p className="hero-description">Book trusted professionals for your home.</p>
+    </div>
+  </div>
+);
 
-function authHeader() {
-  const auth = localStorage.getItem('quickfix-owner');
-  if (!auth) return null;
-  const { token } = JSON.parse(auth);
-  return { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
-}
+// OTP Login Component - MAIN ENTRY SCREEN
+const LoginSection = ({ onLoginSuccess }) => {
+  const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [showOTP, setShowOTP] = useState(false);
+  const [otp, setOtp] = useState('');
 
-function OwnerLayout({ children }) {
-  const navigate = useNavigate();
-  const [ownerName, setOwnerName] = useState('Owner');
-
-  useEffect(() => {
-    const auth = localStorage.getItem('quickfix-owner');
-    if (!auth) {
-      navigate('/');
-      return;
+  const handleGetOTP = (e) => {
+    e.preventDefault();
+    if (name && phone.length === 10) {
+      setShowOTP(true);
+      alert('OTP sent to ' + phone);
     }
-    const parsed = JSON.parse(auth);
-    setOwnerName(parsed.owner?.name || 'Owner');
-  }, [navigate]);
+  };
 
-  function handleLogout() {
-    localStorage.removeItem('quickfix-owner');
-    navigate('/');
-  }
+  const handleVerifyOTP = (e) => {
+    e.preventDefault();
+    if (otp === '123456') {
+      onLoginSuccess({ name, phone });
+    } else {
+      alert('Invalid OTP. Try 123456');
+    }
+  };
 
   return (
-    <div className="page">
-      <header className="hero">
-        <div>
-          <p className="eyebrow">Owner panel</p>
-          <h1>QuickFix admin dashboard</h1>
-          <p className="subtext">Welcome back, {ownerName}. Manage bookings, workers, customers, and categories.</p>
-        </div>
-        <button className="secondary-btn logout-btn" onClick={handleLogout}>Log out</button>
-      </header>
-      <nav className="owner-nav">
-        <Link to="/dashboard">Dashboard</Link>
-        <Link to="/bookings">Bookings</Link>
-        <Link to="/workers">Workers</Link>
-        <Link to="/customers">Customers</Link>
-        <Link to="/categories">Categories</Link>
-      </nav>
-      {children}
+    <div className="login-section">
+      <h3>Customer Login</h3>
+      
+      {!showOTP ? (
+        <form onSubmit={handleGetOTP} className="login-form">
+          <input
+            type="text"
+            placeholder="Your Name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required
+          />
+          <input
+            type="tel"
+            placeholder="Phone Number"
+            maxLength="10"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))}
+            required
+          />
+          <button type="submit" className="btn-otp">Get OTP</button>
+        </form>
+      ) : (
+        <form onSubmit={handleVerifyOTP} className="login-form">
+          <p className="otp-message">Enter OTP sent to {phone}</p>
+          <input
+            type="text"
+            placeholder="Enter 6-digit OTP"
+            maxLength="6"
+            value={otp}
+            onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
+            required
+          />
+          <button type="submit" className="btn-otp">Verify & Login</button>
+          <button 
+            type="button" 
+            className="btn-back"
+            onClick={() => {
+              setShowOTP(false);
+              setOtp('');
+            }}
+          >
+            Back
+          </button>
+        </form>
+      )}
     </div>
   );
-}
+};
 
-function Login() {
-  const [email, setEmail] = useState('owner@quickfix.com');
-  const [password, setPassword] = useState('quickfix123');
-  const [message, setMessage] = useState('');
-  const navigate = useNavigate();
-
-  async function handleLogin(e) {
-    e.preventDefault();
-    const response = await fetch(`${API_BASE}/api/auth/owner/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password })
-    });
-
-    const data = await response.json();
-    if (response.ok) {
-      localStorage.setItem('quickfix-owner', JSON.stringify(data));
-      navigate('/dashboard');
-    } else {
-      setMessage(data.message || 'Login failed');
-    }
-  }
+// Services Overview - Click to explore
+const ServicesOverview = ({ onSelectService }) => {
+  const services = [
+    { id: 1, name: 'Electrical', icon: '⚡' },
+    { id: 2, name: 'Plumbing', icon: '🚰' },
+    { id: 3, name: 'AC & Appliances', icon: '❄️' },
+    { id: 4, name: 'Home Help', icon: '🏠' },
+    { id: 5, name: 'Home Renovation', icon: '🔧' },
+    { id: 6, name: 'Moving & Packing', icon: '📦' },
+    { id: 7, name: 'Security', icon: '🔐' }
+  ];
 
   return (
-    <div className="page">
-      <div className="hero">
-        <p className="eyebrow">QuickFix Owner</p>
-        <h1>Admin sign in</h1>
+    <div className="services-overview-section">
+      <h3>Explore Services</h3>
+      <p className="services-subtitle">View all our services - Click to explore</p>
+      <div className="services-grid">
+        {services.map(service => (
+          <div
+            key={service.id}
+            className="service-card"
+            onClick={() => onSelectService(service)}
+          >
+            <div className="service-icon">{service.icon}</div>
+            <div className="service-name">{service.name}</div>
+          </div>
+        ))}
       </div>
-      <div className="card stack">
-        <form onSubmit={handleLogin} className="stack">
-          <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" />
-          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password" />
-          <button className="primary-btn" type="submit">Sign in</button>
-          {message ? <p className="message">{message}</p> : null}
+    </div>
+  );
+};
+
+// SubServices Overview - View only
+const SubServicesOverview = ({ service, onBack }) => {
+  const subservices = {
+    'Electrical': ['Wiring', 'Installation', 'Repair', 'Maintenance'],
+    'Plumbing': ['Leakage Fix', 'Pipe Installation', 'Drain Cleaning', 'Water Heating'],
+    'AC & Appliances': ['AC Service', 'Refrigerator Repair', 'Washing Machine', 'Microwave'],
+    'Home Help': ['Cooking', 'Cleaning', 'Laundry', 'Babysitting'],
+    'Home Renovation': ['Painting', 'Flooring', 'Carpentry', 'Tile Work'],
+    'Moving & Packing': ['House Shifting', 'Office Relocation', 'Packing', 'Loading'],
+    'Security': ['CCTV Installation', 'Alarm System', 'Door Lock', 'Safe Installation']
+  };
+
+  return (
+    <div className="subservices-view">
+      <div className="view-header">
+        <button className="btn-back-nav" onClick={onBack}>← Back</button>
+        <h3>{service.name}</h3>
+      </div>
+      
+      <p className="view-subtitle">Available services - Click to book</p>
+      
+      <div className="subservices-list">
+        {(subservices[service.name] || []).map((sub, idx) => (
+          <div key={idx} className="subservice-item">
+            <div className="subservice-icon">{service.icon}</div>
+            <div className="subservice-details">
+              <h4>{sub}</h4>
+              <p>Professional service in Salem</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// Booking Interface - Only after OTP
+const BookingInterface = ({ user, onBook, onLogout }) => {
+  const [selectedService, setSelectedService] = useState(null);
+  const [bookingData, setBookingData] = useState({
+    service: '',
+    date: '',
+    time: '',
+    description: ''
+  });
+
+  const services = [
+    { id: 1, name: 'Electrical', icon: '⚡' },
+    { id: 2, name: 'Plumbing', icon: '🚰' },
+    { id: 3, name: 'AC & Appliances', icon: '❄️' },
+    { id: 4, name: 'Home Help', icon: '🏠' },
+    { id: 5, name: 'Home Renovation', icon: '🔧' },
+    { id: 6, name: 'Moving & Packing', icon: '📦' },
+    { id: 7, name: 'Security', icon: '🔐' }
+  ];
+
+  const handleSubmitBooking = (e) => {
+    e.preventDefault();
+    if (selectedService && bookingData.date && bookingData.time) {
+      onBook({
+        service: selectedService.name,
+        icon: selectedService.icon,
+        date: bookingData.date,
+        time: bookingData.time,
+        description: bookingData.description
+      });
+      setSelectedService(null);
+      setBookingData({ service: '', date: '', time: '', description: '' });
+    }
+  };
+
+  if (selectedService) {
+    return (
+      <div className="booking-form-container">
+        <div className="booking-header">
+          <button className="btn-back-nav" onClick={() => setSelectedService(null)}>← Back</button>
+          <h3>Book {selectedService.name}</h3>
+        </div>
+
+        <form onSubmit={handleSubmitBooking} className="booking-form">
+          <div className="form-group">
+            <label>Service Type</label>
+            <input 
+              type="text" 
+              value={selectedService.name} 
+              disabled 
+              className="form-input"
+            />
+          </div>
+
+          <div className="form-group">
+            <label>Preferred Date</label>
+            <input 
+              type="date" 
+              value={bookingData.date}
+              onChange={(e) => setBookingData({...bookingData, date: e.target.value})}
+              required
+              className="form-input"
+            />
+          </div>
+
+          <div className="form-group">
+            <label>Preferred Time</label>
+            <input 
+              type="time" 
+              value={bookingData.time}
+              onChange={(e) => setBookingData({...bookingData, time: e.target.value})}
+              required
+              className="form-input"
+            />
+          </div>
+
+          <div className="form-group">
+            <label>Additional Details (Optional)</label>
+            <textarea 
+              value={bookingData.description}
+              onChange={(e) => setBookingData({...bookingData, description: e.target.value})}
+              placeholder="Tell us more about your service needs..."
+              className="form-textarea"
+              rows="4"
+            />
+          </div>
+
+          <button type="submit" className="btn-book-submit">Confirm Booking</button>
         </form>
       </div>
+    );
+  }
+
+  return (
+    <div className="booking-interface">
+      <div className="booking-greeting">
+        <h3>Welcome, {user.name}! 👋</h3>
+        <p>Ready to book a service?</p>
+      </div>
+
+      <div className="location-info">
+        📍 <strong>Salem, Tamil Nadu</strong>
+      </div>
+
+      <div className="booking-services">
+        <h4>Select Service to Book</h4>
+        <div className="book-services-grid">
+          {services.map(service => (
+            <div
+              key={service.id}
+              className="book-service-card"
+              onClick={() => setSelectedService(service)}
+            >
+              <div className="book-service-icon">{service.icon}</div>
+              <div className="book-service-name">{service.name}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <button className="btn-logout" onClick={onLogout}>Logout</button>
     </div>
   );
-}
+};
 
-function Dashboard() {
-  const [summary, setSummary] = useState(null);
-
-  useEffect(() => {
-    const headers = authHeader();
-    if (!headers) return;
-
-    fetch(`${API_BASE}/api/owner/dashboard`, { headers })
-      .then((response) => response.json())
-      .then((data) => setSummary(data));
-  }, []);
-
+// My Bookings View
+const MyBookingsView = ({ bookings, onClose }) => {
   return (
-    <OwnerLayout>
-      <section className="card stats-card">
-        {summary ? (
-          <div className="stats-grid">
-            <div className="stat-card"><strong>{summary.totalBookings}</strong><span>Total bookings</span></div>
-            <div className="stat-card"><strong>{summary.pendingBookings}</strong><span>Pending</span></div>
-            <div className="stat-card"><strong>{summary.assignedBookings}</strong><span>Assigned</span></div>
-            <div className="stat-card"><strong>{summary.workerCount}</strong><span>Workers</span></div>
-            <div className="stat-card"><strong>{summary.customerCount}</strong><span>Customers</span></div>
-          </div>
-        ) : (
-          <p className="subtext">Loading dashboard...</p>
-        )}
-      </section>
-    </OwnerLayout>
-  );
-}
-
-function Bookings() {
-  const [bookings, setBookings] = useState([]);
-  const [workers, setWorkers] = useState([]);
-  const [message, setMessage] = useState('');
-
-  useEffect(() => {
-    const headers = authHeader();
-    if (!headers) return;
-
-    fetch(`${API_BASE}/api/owner/bookings`, { headers })
-      .then((response) => response.json())
-      .then((data) => setBookings(data));
-
-    fetch(`${API_BASE}/api/workers`)
-      .then((response) => response.json())
-      .then((data) => setWorkers(data));
-  }, []);
-
-  async function assignWorker(bookingId, workerId) {
-    if (!workerId) return;
-    const headers = authHeader();
-    if (!headers) return;
-
-    const response = await fetch(`${API_BASE}/api/owner/bookings/${bookingId}/assign`, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({ workerId })
-    });
-    if (response.ok) {
-      const updated = await response.json();
-      setBookings((items) => items.map((item) => item.id === updated.id ? updated : item));
-      setMessage(`Assigned ${updated.assignedWorkerName} successfully.`);
-    }
-  }
-
-  async function updateStatus(bookingId, status) {
-    const headers = authHeader();
-    if (!headers) return;
-
-    const response = await fetch(`${API_BASE}/api/owner/bookings/${bookingId}/status`, {
-      method: 'PATCH',
-      headers,
-      body: JSON.stringify({ status })
-    });
-    if (response.ok) {
-      const updated = await response.json();
-      setBookings((items) => items.map((item) => item.id === updated.id ? updated : item));
-      setMessage(`Booking status updated to ${updated.status}.`);
-    }
-  }
-
-  return (
-    <OwnerLayout>
-      <div className="section-header">
-        <h2>Bookings</h2>
-        <span className="subtext">Review requests and assign workers manually.</span>
+    <div className="my-bookings-view">
+      <div className="bookings-header">
+        <button className="btn-back-nav" onClick={onClose}>← Back</button>
+        <h3>My Bookings</h3>
       </div>
-      {message ? <div className="card"><p className="message">{message}</p></div> : null}
+
       {bookings.length === 0 ? (
-        <div className="card empty-state"><p className="subtext">No bookings yet. Customer requests will appear here after booking confirmation.</p></div>
-      ) : bookings.map((booking) => (
-        <div className="card booking-card" key={booking.id}>
-          <div className="booking-meta">
-            <div>
-              <p className="eyebrow">{booking.subcategory}</p>
-              <p><strong>{booking.customerName}</strong></p>
-              <p className="subtext">{booking.address}</p>
-              <p className="subtext">{new Date(booking.scheduledAt).toLocaleString()}</p>
-            </div>
-            <span className={`status-pill ${booking.status.toLowerCase().replace(/\s+/g, '-')}`}>{booking.status}</span>
-          </div>
-          <div className="grid-two gap-10">
-            <select defaultValue="" onChange={(e) => assignWorker(booking.id, e.target.value)}>
-              <option value="">Assign worker</option>
-              {workers.map((worker) => <option key={worker.id} value={worker.id}>{worker.name} • {worker.specialty}</option>)}
-            </select>
-            <select defaultValue={booking.status} onChange={(e) => updateStatus(booking.id, e.target.value)}>
-              <option>Pending</option>
-              <option>Assigned</option>
-              <option>On the Way</option>
-              <option>Completed</option>
-              <option>Cancelled</option>
-            </select>
-          </div>
-          {booking.assignedWorkerName ? (
-            <div className="worker-card">
-              <img className="worker-photo" src={booking.assignedWorkerPhoto} alt={booking.assignedWorkerName} />
-              <div>
-                <p><strong>{booking.assignedWorkerName}</strong></p>
-                <p className="subtext">{booking.assignedWorkerExperience}</p>
-                <p className="subtext">{booking.assignedWorkerPhone}</p>
-                <p className="subtext">ETA: {booking.estimatedArrivalAt ? new Date(booking.estimatedArrivalAt).toLocaleString() : 'Pending'}</p>
+        <div className="no-bookings-message">
+          <p>No bookings yet. Book your first service!</p>
+        </div>
+      ) : (
+        <div className="bookings-list">
+          {bookings.map((booking, idx) => (
+            <div key={idx} className="booking-history-card">
+              <div className="booking-history-icon">{booking.icon}</div>
+              <div className="booking-history-details">
+                <h4>{booking.service}</h4>
+                <p>📅 {booking.date} at {booking.time}</p>
+                <p className="status-badge">Confirmed</p>
               </div>
             </div>
-          ) : null}
+          ))}
         </div>
-      ))}
-    </OwnerLayout>
-  );
-}
-
-function Workers() {
-  const [workers, setWorkers] = useState([]);
-  const [form, setForm] = useState({ name: '', phone: '', experience: '', specialty: '', photoUrl: '' });
-  const [editing, setEditing] = useState(null);
-
-  useEffect(() => {
-    fetch(`${API_BASE}/api/workers`)
-      .then((response) => response.json())
-      .then((data) => setWorkers(data));
-  }, []);
-
-  async function saveWorker(e) {
-    e.preventDefault();
-    const payload = { ...form };
-    const url = editing ? `${API_BASE}/api/workers/${editing.id}` : `${API_BASE}/api/workers`;
-    const method = editing ? 'PUT' : 'POST';
-    const response = await fetch(url, {
-      method,
-      headers: { 'Content-Type': 'application/json', ...authHeader() },
-      body: JSON.stringify(payload)
-    });
-    if (!response.ok) return;
-    const saved = await response.json();
-    setWorkers((items) => {
-      if (editing) {
-        return items.map((item) => item.id === saved.id ? saved : item);
-      }
-      return [saved, ...items];
-    });
-    setForm({ name: '', phone: '', experience: '', specialty: '', photoUrl: '' });
-    setEditing(null);
-  }
-
-  async function removeWorker(id) {
-    const response = await fetch(`${API_BASE}/api/workers/${id}`, {
-      method: 'DELETE',
-      headers: authHeader()
-    });
-    if (response.ok) {
-      setWorkers((items) => items.filter((item) => item.id !== id));
-    }
-  }
-
-  function startEdit(worker) {
-    setEditing(worker);
-    setForm({ name: worker.name, phone: worker.phone, experience: worker.experience, specialty: worker.specialty, photoUrl: worker.photoUrl || '' });
-  }
-
-  return (
-    <OwnerLayout>
-      <div className="section-header">
-        <h2>Workers</h2>
-        <span className="subtext">Add, edit, or remove workers on the platform.</span>
-      </div>
-      <form onSubmit={saveWorker} className="card stack">
-        <input placeholder="Name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-        <input placeholder="Phone" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
-        <input placeholder="Experience" value={form.experience} onChange={(e) => setForm({ ...form, experience: e.target.value })} />
-        <input placeholder="Specialty" value={form.specialty} onChange={(e) => setForm({ ...form, specialty: e.target.value })} />
-        <input placeholder="Photo URL" value={form.photoUrl} onChange={(e) => setForm({ ...form, photoUrl: e.target.value })} />
-        <div className="grid-two gap-10">
-          <button className="primary-btn" type="submit">{editing ? 'Save worker' : 'Add worker'}</button>
-          {editing ? <button className="secondary-btn" type="button" onClick={() => { setEditing(null); setForm({ name: '', phone: '', experience: '', specialty: '', photoUrl: '' }); }}>Cancel</button> : null}
-        </div>
-      </form>
-      {workers.length === 0 ? (
-        <div className="card empty-state"><p className="subtext">No workers added yet.</p></div>
-      ) : (
-        workers.map((worker) => (
-          <div className="card worker-row" key={worker.id}>
-            <div>
-              <p><strong>{worker.name}</strong></p>
-              <p className="subtext">{worker.specialty}</p>
-              <p className="subtext">{worker.phone}</p>
-            </div>
-            <div className="action-group">
-              <button className="secondary-btn" type="button" onClick={() => startEdit(worker)}>Edit</button>
-              <button className="delete-btn" type="button" onClick={() => removeWorker(worker.id)}>Remove</button>
-            </div>
-          </div>
-        ))
       )}
-    </OwnerLayout>
+    </div>
   );
-}
+};
 
-function Customers() {
-  const [customers, setCustomers] = useState([]);
-
-  useEffect(() => {
-    const headers = authHeader();
-    if (!headers) return;
-
-    fetch(`${API_BASE}/api/owner/customers`, { headers })
-      .then((response) => response.json())
-      .then((data) => setCustomers(data));
-  }, []);
-
-  return (
-    <OwnerLayout>
-      <div className="section-header">
-        <h2>Customers</h2>
-        <span className="subtext">View customers who booked through QuickFix.</span>
-      </div>
-      {customers.length === 0 ? (
-        <div className="card empty-state"><p className="subtext">No customers found yet.</p></div>
-      ) : customers.map((customer) => (
-        <div className="card customer-row" key={customer.id}>
-          <div>
-            <p><strong>{customer.name}</strong></p>
-            <p className="subtext">{customer.phone}</p>
-          </div>
-          <span className="subtext">Joined {new Date(customer.createdAt).toLocaleDateString()}</span>
-        </div>
-      ))}
-    </OwnerLayout>
-  );
-}
-
-function Categories() {
-  const [categories, setCategories] = useState([]);
-  const [form, setForm] = useState({ name: '', icon: '', subcategories: '' });
-  const [editing, setEditing] = useState(null);
-
-  useEffect(() => {
-    const headers = authHeader();
-    if (!headers) return;
-
-    fetch(`${API_BASE}/api/owner/categories`, { headers })
-      .then((response) => response.json())
-      .then((data) => setCategories(data));
-  }, []);
-
-  async function saveCategory(e) {
-    e.preventDefault();
-    const headers = authHeader();
-    if (!headers) return;
-    const payload = {
-      name: form.name,
-      icon: form.icon || '🛠️',
-      subcategories: form.subcategories.split(',').map((sub) => sub.trim()).filter(Boolean)
-    };
-    const url = editing ? `${API_BASE}/api/owner/categories/${editing.id}` : `${API_BASE}/api/owner/categories`;
-    const method = editing ? 'PUT' : 'POST';
-    const response = await fetch(url, {
-      method,
-      headers,
-      body: JSON.stringify(payload)
-    });
-    if (!response.ok) return;
-    const saved = await response.json();
-    setCategories((items) => {
-      if (editing) {
-        return items.map((item) => item.id === saved.id ? saved : item);
-      }
-      return [saved, ...items];
-    });
-    setForm({ name: '', icon: '', subcategories: '' });
-    setEditing(null);
-  }
-
-  async function removeCategory(id) {
-    const headers = authHeader();
-    if (!headers) return;
-    const response = await fetch(`${API_BASE}/api/owner/categories/${id}`, {
-      method: 'DELETE',
-      headers
-    });
-    if (response.ok) {
-      setCategories((items) => items.filter((item) => item.id !== id));
-    }
-  }
-
-  function startEdit(category) {
-    setEditing(category);
-    setForm({ name: category.name, icon: category.icon, subcategories: category.subcategories.join(', ') });
-  }
-
-  return (
-    <OwnerLayout>
-      <div className="section-header">
-        <h2>Categories</h2>
-        <span className="subtext">Add or update main categories and service lists.</span>
-      </div>
-      <form onSubmit={saveCategory} className="card stack">
-        <input placeholder="Category name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-        <input placeholder="Icon emoji" value={form.icon} onChange={(e) => setForm({ ...form, icon: e.target.value })} />
-        <textarea placeholder="Subcategories, comma separated" value={form.subcategories} onChange={(e) => setForm({ ...form, subcategories: e.target.value })} rows="3" />
-        <div className="grid-two gap-10">
-          <button className="primary-btn" type="submit">{editing ? 'Save category' : 'Add category'}</button>
-          {editing ? <button className="secondary-btn" type="button" onClick={() => { setEditing(null); setForm({ name: '', icon: '', subcategories: '' }); }}>Cancel</button> : null}
-        </div>
-      </form>
-      {categories.length === 0 ? (
-        <div className="card empty-state"><p className="subtext">No categories created yet.</p></div>
-      ) : categories.map((category) => (
-        <div className="card category-row" key={category.id}>
-          <div>
-            <p className="emoji">{category.icon}</p>
-            <p><strong>{category.name}</strong></p>
-            <p className="subtext">{category.subcategories.join(', ')}</p>
-          </div>
-          <div className="action-group">
-            <button className="secondary-btn" type="button" onClick={() => startEdit(category)}>Edit</button>
-            <button className="delete-btn" type="button" onClick={() => removeCategory(category.id)}>Delete</button>
-          </div>
-        </div>
-      ))}
-    </OwnerLayout>
-  );
-}
-
+// Main App Component
 export default function App() {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [user, setUser] = useState(null);
+  const [currentView, setCurrentView] = useState('booking'); // 'booking', 'service-overview', 'subservice-overview', 'bookings'
+  const [selectedService, setSelectedService] = useState(null);
+  const [bookings, setBookings] = useState([
+    {
+      service: 'Electrical Wiring',
+      icon: '⚡',
+      date: '2024-08-20',
+      time: '10:00 AM'
+    }
+  ]);
+
+  const handleLoginSuccess = (userData) => {
+    setUser(userData);
+    setIsLoggedIn(true);
+    setCurrentView('booking');
+  };
+
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+    setUser(null);
+    setCurrentView('booking');
+    setSelectedService(null);
+  };
+
+  const handleBookService = (bookingInfo) => {
+    setBookings([...bookings, bookingInfo]);
+    setCurrentView('booking');
+    alert('✅ Booking confirmed! We will contact you shortly.');
+  };
+
+  const handleSelectService = (service) => {
+    setSelectedService(service);
+    setCurrentView('subservice-overview');
+  };
+
+  // NOT LOGGED IN - Show Hero + Login
+  if (!isLoggedIn) {
+    return (
+      <div className="app-container">
+        <HeroBanner />
+        <LoginSection onLoginSuccess={handleLoginSuccess} />
+      </div>
+    );
+  }
+
+  // LOGGED IN - Show Top Bar + Current View
   return (
-    <div className="app-shell">
-      <Routes>
-        <Route path="/" element={<Login />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/bookings" element={<Bookings />} />
-        <Route path="/workers" element={<Workers />} />
-        <Route path="/customers" element={<Customers />} />
-        <Route path="/categories" element={<Categories />} />
-      </Routes>
+    <div className="app-container app-logged-in">
+      <div className="top-bar">
+        <button className="btn-menu">☰</button>
+        <h1 className="app-title">QuickFix</h1>
+        <button 
+          className="btn-profile" 
+          onClick={() => setCurrentView(currentView === 'bookings' ? 'booking' : 'bookings')}
+        >
+          📋
+        </button>
+      </div>
+
+      {/* Services Overview - Educational */}
+      {currentView === 'service-overview' && (
+        <div className="container">
+          <ServicesOverview onSelectService={handleSelectService} />
+        </div>
+      )}
+
+      {/* Subservices Overview - Educational */}
+      {currentView === 'subservice-overview' && selectedService && (
+        <div className="container">
+          <SubServicesOverview 
+            service={selectedService}
+            onBack={() => setCurrentView('service-overview')}
+          />
+        </div>
+      )}
+
+      {/* My Bookings */}
+      {currentView === 'bookings' && (
+        <div className="container">
+          <MyBookingsView 
+            bookings={bookings}
+            onClose={() => setCurrentView('booking')}
+          />
+        </div>
+      )}
+
+      {/* Main Booking Interface */}
+      {currentView === 'booking' && (
+        <div className="container">
+          <BookingInterface 
+            user={user}
+            onBook={handleBookService}
+            onLogout={handleLogout}
+          />
+        </div>
+      )}
     </div>
   );
 }

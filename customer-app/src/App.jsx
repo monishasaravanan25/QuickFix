@@ -1,491 +1,423 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Routes, Route, Link, useNavigate, useLocation, useParams } from 'react-router-dom';
-import { buildBookingPayload } from './lib/booking';
+import React, { useState } from 'react';
+import './styles.css';
 
-const API_BASE = 'https://quickfix-serve.onrender.com';
-function Home() {
-  const [phone, setPhone] = useState('');
+// Hero Banner Component with Logo
+const HeroBanner = () => (
+  <div className="hero-banner">
+    <div className="hero-content">
+      {/* LOGO - Replace /quickfix-logo.png with your logo file path */}
+      <div className="hero-logo">
+        <img src="/quickfix-logo.png" alt="QuickFix Logo" onError={(e) => {
+          e.target.style.display = 'none';
+        }} />
+      </div>
+      
+      <h1 className="hero-quickfix">QUICKFIX</h1>
+      <h2 className="hero-subtitle">Home services, made easy.</h2>
+      <p className="hero-description">Book trusted professionals for your home.</p>
+    </div>
+  </div>
+);
+
+// OTP Login Component - MAIN ENTRY SCREEN
+const LoginSection = ({ onLoginSuccess }) => {
   const [name, setName] = useState('');
-  const [message, setMessage] = useState('');
-  const [categories, setCategories] = useState([]);
-  const [loadingCategories, setLoadingCategories] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState([]);
-  const [latestBookings, setLatestBookings] = useState([]);
-  const navigate = useNavigate();
+  const [phone, setPhone] = useState('');
+  const [showOTP, setShowOTP] = useState(false);
+  const [otp, setOtp] = useState('');
 
-  useEffect(() => {
-    fetch(`${API_BASE}/api/categories`)
-      .then((response) => response.json())
-      .then((data) => {
-        setCategories(data || []);
-        setLoadingCategories(false);
-      })
-      .catch(() => {
-        setCategories([]);
-        setLoadingCategories(false);
-      });
-  }, []);
-
-  useEffect(() => {
-    const storage = localStorage.getItem('quickfix-customer');
-    if (!storage) return;
-    const parsed = JSON.parse(storage);
-    setPhone(parsed.phone || '');
-    setName(parsed.name || '');
-    fetch(`${API_BASE}/api/bookings/customer/${parsed.id}`)
-      .then((response) => response.json())
-      .then((data) => setLatestBookings((data || []).slice(0, 3)))
-      .catch(() => setLatestBookings([]));
-  }, []);
-
-  useEffect(() => {
-    if (!searchQuery.trim()) {
-      setSearchResults([]);
-      return;
-    }
-
-    const query = searchQuery.trim().toLowerCase();
-    const categoryMatches = categories
-      .filter((category) => category.name.toLowerCase().includes(query))
-      .map((category) => ({ type: 'category', category }));
-
-    const serviceMatches = categories.flatMap((category) =>
-      (category.subcategories || [])
-        .filter((subcategory) => subcategory.toLowerCase().includes(query))
-        .map((subcategory) => ({ type: 'service', category, subcategory }))
-    );
-
-    setSearchResults([...serviceMatches, ...categoryMatches]);
-  }, [searchQuery, categories]);
-
-  async function handleLogin(e) {
+  const handleGetOTP = (e) => {
     e.preventDefault();
-    if (!phone.trim()) {
-      setMessage('Please enter a mobile number.');
-      return;
+    if (name && phone.length === 10) {
+      setShowOTP(true);
+      alert('OTP sent to ' + phone);
     }
+  };
 
-    const response = await fetch(`${API_BASE}/api/customers/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ phone, name })
-    });
-
-    const data = await response.json();
-    if (response.ok) {
-      localStorage.setItem('quickfix-customer', JSON.stringify({ id: data.customer.id, phone, name: data.customer.name }));
-      setMessage('Login successful. You can now book a service.');
-      navigate('/book');
+  const handleVerifyOTP = (e) => {
+    e.preventDefault();
+    if (otp === '123456') {
+      onLoginSuccess({ name, phone });
     } else {
-      setMessage(data.message || 'Unable to sign in.');
+      alert('Invalid OTP. Try 123456');
     }
-  }
+  };
 
   return (
-    <div className="page">
-      <header className="hero">
-        <div>
-          <p className="eyebrow">QuickFix</p>
-          <h1>One app for every home service.</h1>
-          <p className="subtext">Fast booking, trusted workers, and simple owner management.</p>
-        </div>
-      </header>
-
-      <section className="card">
-        <form className="stack" onSubmit={handleLogin}>
-          <h3>Customer login</h3>
-          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Your name" />
-          <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Mobile number" />
-          <button className="primary-btn" type="submit">Get OTP</button>
-          {message ? <p className="message">{message}</p> : null}
-        </form>
-      </section>
-
-      <section className="card">
-        <div className="search-box">
+    <div className="login-section">
+      <h3>Customer Login</h3>
+      
+      {!showOTP ? (
+        <form onSubmit={handleGetOTP} className="login-form">
           <input
-            className="search-input"
-            placeholder="Search categories or services"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            type="text"
+            placeholder="Your Name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required
           />
-        </div>
-        {loadingCategories ? (
-          <p className="subtext">Loading services…</p>
-        ) : (
-          <>
-            {searchQuery.trim() ? (
-              <div className="category-grid">
-                {searchResults.length === 0 ? (
-                  <p className="subtext">No results found for “{searchQuery}”.</p>
-                ) : (
-                  searchResults.map((item) => (
-                    <button
-                      key={item.type === 'service' ? `${item.category.id}-${item.subcategory}` : item.category.id}
-                      className="category-card"
-                      onClick={() => {
-                        if (item.type === 'service') {
-                          navigate('/book', { state: { categoryId: item.category.id, category: item.category.name, subcategory: item.subcategory } });
-                        } else {
-                          navigate(`/category/${item.category.id}`);
-                        }
-                      }}
-                    >
-                      <span className="icon">{item.category.icon}</span>
-                      <strong>{item.type === 'service' ? item.subcategory : item.category.name}</strong>
-                      <p className="subtext">{item.type === 'service' ? item.category.name : 'Category'}</p>
-                    </button>
-                  ))
-                )}
-              </div>
-            ) : categories.length === 0 ? (
-              <p className="subtext">No services are available yet. Please try again later.</p>
-            ) : (
-              <div className="category-grid">
-                {categories.map((category) => (
-                  <Link key={category.id} to={`/category/${category.id}`} className="category-card">
-                    <span className="icon">{category.icon}</span>
-                    <strong>{category.name}</strong>
-                  </Link>
-                ))}
-              </div>
-            )}
-          </>
-        )}
-      </section>
-
-      <section className="card stack">
-        <h3>Quick actions</h3>
-        <div className="grid-two">
-          <Link className="secondary-btn" to="/bookings">My bookings</Link>
-        </div>
-      </section>
-      {latestBookings.length > 0 ? (
-        <section className="card stack">
-          <div className="section-header">
-            <h3>Recent bookings</h3>
-            <Link className="subtle-link" to="/bookings">See all</Link>
-          </div>
-          {latestBookings.map((booking) => (
-            <div className="booking-preview" key={booking.id}>
-              <p><strong>{booking.subcategory}</strong></p>
-              <p className="subtext">{booking.address}</p>
-              <p className="subtext">{new Date(booking.scheduledAt).toLocaleString()}</p>
-              <p className="status-pill">{booking.status}</p>
-            </div>
-          ))}
-        </section>
-      ) : null}
-      <section className="card stack">
-        <h3>Customer support</h3>
-        <p className="subtext">Need help with your booking? Our support team is ready.</p>
-        <a className="secondary-btn" href="tel:+18001234567">Call support</a>
-      </section>
+          <input
+            type="tel"
+            placeholder="Phone Number"
+            maxLength="10"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))}
+            required
+          />
+          <button type="submit" className="btn-otp">Get OTP</button>
+        </form>
+      ) : (
+        <form onSubmit={handleVerifyOTP} className="login-form">
+          <p className="otp-message">Enter OTP sent to {phone}</p>
+          <input
+            type="text"
+            placeholder="Enter 6-digit OTP"
+            maxLength="6"
+            value={otp}
+            onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
+            required
+          />
+          <button type="submit" className="btn-otp">Verify & Login</button>
+          <button 
+            type="button" 
+            className="btn-back"
+            onClick={() => {
+              setShowOTP(false);
+              setOtp('');
+            }}
+          >
+            Back
+          </button>
+        </form>
+      )}
     </div>
   );
-}
+};
 
-function CategoryPage() {
-  const { id } = useParams();
-  const [selectedCategory, setSelectedCategory] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    fetch(`${API_BASE}/api/categories/${id}`)
-      .then((response) => response.json())
-      .then((data) => {
-        setSelectedCategory(data || null);
-        setLoading(false);
-      })
-      .catch(() => {
-        setSelectedCategory(null);
-        setLoading(false);
-      });
-  }, [id]);
-
-  if (loading) {
-    return <div className="page"><h2>Loading services…</h2></div>;
-  }
-
-  if (!selectedCategory) {
-    return <div className="page"><h2>No services available</h2><p className="subtext">This category is currently empty.</p></div>;
-  }
-
-  const subcategories = selectedCategory.subcategories.some((subcategory) => subcategory === 'Other' || subcategory.toLowerCase().startsWith('other'))
-    ? selectedCategory.subcategories
-    : [...selectedCategory.subcategories, 'Other'];
+// Services Overview - Click to explore
+const ServicesOverview = ({ onSelectService }) => {
+  const services = [
+    { id: 1, name: 'Electrical', icon: '⚡' },
+    { id: 2, name: 'Plumbing', icon: '🚰' },
+    { id: 3, name: 'AC & Appliances', icon: '❄️' },
+    { id: 4, name: 'Home Help', icon: '🏠' },
+    { id: 5, name: 'Home Renovation', icon: '🔧' },
+    { id: 6, name: 'Moving & Packing', icon: '📦' },
+    { id: 7, name: 'Security', icon: '🔐' }
+  ];
 
   return (
-    <div className="page">
-      <h2>{selectedCategory.name}</h2>
-      <p className="subtext">Select the service you need.</p>
-      <div className="stack">
-        {subcategories.map((subcategory) => (
-          <button key={subcategory} className="primary-btn" onClick={() => navigate('/book', { state: { categoryId: selectedCategory.id, category: selectedCategory.name, subcategory } })}>
-            {subcategory}
-          </button>
+    <div className="services-overview-section">
+      <h3>Explore Services</h3>
+      <p className="services-subtitle">View all our services - Click to explore</p>
+      <div className="services-grid">
+        {services.map(service => (
+          <div
+            key={service.id}
+            className="service-card"
+            onClick={() => onSelectService(service)}
+          >
+            <div className="service-icon">{service.icon}</div>
+            <div className="service-name">{service.name}</div>
+          </div>
         ))}
       </div>
     </div>
   );
-}
+};
 
-function BookingFlow() {
-  const location = useLocation();
-  const navigate = useNavigate();
-  const [customer, setCustomer] = useState(null);
-  const [step, setStep] = useState(1);
-  const [categories, setCategories] = useState([]);
-  const [loadingCategories, setLoadingCategories] = useState(true);
-  const [form, setForm] = useState({
-    categoryId: location.state?.categoryId || '',
-    category: location.state?.category || '',
-    subcategory: location.state?.subcategory || '',
-    otherDetails: '',
-    address: '',
-    scheduledAt: '',
-    paymentMethod: 'Cash on Delivery'
+// SubServices Overview - View only
+const SubServicesOverview = ({ service, onBack }) => {
+  const subservices = {
+    'Electrical': ['Wiring', 'Installation', 'Repair', 'Maintenance'],
+    'Plumbing': ['Leakage Fix', 'Pipe Installation', 'Drain Cleaning', 'Water Heating'],
+    'AC & Appliances': ['AC Service', 'Refrigerator Repair', 'Washing Machine', 'Microwave'],
+    'Home Help': ['Cooking', 'Cleaning', 'Laundry', 'Babysitting'],
+    'Home Renovation': ['Painting', 'Flooring', 'Carpentry', 'Tile Work'],
+    'Moving & Packing': ['House Shifting', 'Office Relocation', 'Packing', 'Loading'],
+    'Security': ['CCTV Installation', 'Alarm System', 'Door Lock', 'Safe Installation']
+  };
+
+  return (
+    <div className="subservices-view">
+      <div className="view-header">
+        <button className="btn-back-nav" onClick={onBack}>← Back</button>
+        <h3>{service.name}</h3>
+      </div>
+      
+      <p className="view-subtitle">Available services - Click to book</p>
+      
+      <div className="subservices-list">
+        {(subservices[service.name] || []).map((sub, idx) => (
+          <div key={idx} className="subservice-item">
+            <div className="subservice-icon">{service.icon}</div>
+            <div className="subservice-details">
+              <h4>{sub}</h4>
+              <p>Professional service in Salem</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// Booking Interface - Only after OTP
+const BookingInterface = ({ user, onBook, onLogout }) => {
+  const [selectedService, setSelectedService] = useState(null);
+  const [bookingData, setBookingData] = useState({
+    service: '',
+    date: '',
+    time: '',
+    description: ''
   });
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState('');
 
-  useEffect(() => {
-    const storage = localStorage.getItem('quickfix-customer');
-    if (storage) {
-      setCustomer(JSON.parse(storage));
-    }
+  const services = [
+    { id: 1, name: 'Electrical', icon: '⚡' },
+    { id: 2, name: 'Plumbing', icon: '🚰' },
+    { id: 3, name: 'AC & Appliances', icon: '❄️' },
+    { id: 4, name: 'Home Help', icon: '🏠' },
+    { id: 5, name: 'Home Renovation', icon: '🔧' },
+    { id: 6, name: 'Moving & Packing', icon: '📦' },
+    { id: 7, name: 'Security', icon: '🔐' }
+  ];
 
-    fetch(`${API_BASE}/api/categories`)
-      .then((response) => response.json())
-      .then((data) => {
-        setCategories(data || []);
-        setLoadingCategories(false);
-      })
-      .catch(() => {
-        setCategories([]);
-        setLoadingCategories(false);
+  const handleSubmitBooking = (e) => {
+    e.preventDefault();
+    if (selectedService && bookingData.date && bookingData.time) {
+      onBook({
+        service: selectedService.name,
+        icon: selectedService.icon,
+        date: bookingData.date,
+        time: bookingData.time,
+        description: bookingData.description
       });
-  }, []);
-
-  useEffect(() => {
-    if (location.state?.categoryId && location.state?.subcategory) {
-      setStep(2);
+      setSelectedService(null);
+      setBookingData({ service: '', date: '', time: '', description: '' });
     }
-  }, [location.state]);
+  };
 
-  const progressLabel = useMemo(() => ({ 1: 'Service', 2: 'Address', 3: 'Time', 4: 'Confirm' }[step]), [step]);
-  const selectedCategory = categories.find((entry) => entry.id === form.categoryId) || null;
-  const subcategoryOptions = selectedCategory
-    ? (selectedCategory.subcategories.some((subcategory) => subcategory === 'Other' || subcategory.toLowerCase().startsWith('other'))
-      ? selectedCategory.subcategories
-      : [...selectedCategory.subcategories, 'Other'])
-    : [];
+  if (selectedService) {
+    return (
+      <div className="booking-form-container">
+        <div className="booking-header">
+          <button className="btn-back-nav" onClick={() => setSelectedService(null)}>← Back</button>
+          <h3>Book {selectedService.name}</h3>
+        </div>
 
-  async function submitBooking() {
-    if (!customer) {
-      setError('Please sign in first.');
-      return;
-    }
+        <form onSubmit={handleSubmitBooking} className="booking-form">
+          <div className="form-group">
+            <label>Service Type</label>
+            <input 
+              type="text" 
+              value={selectedService.name} 
+              disabled 
+              className="form-input"
+            />
+          </div>
 
-    if (!form.category || !form.subcategory || !form.address || !form.scheduledAt) {
-      setError('Please complete all booking details before confirming.');
-      return;
-    }
+          <div className="form-group">
+            <label>Preferred Date</label>
+            <input 
+              type="date" 
+              value={bookingData.date}
+              onChange={(e) => setBookingData({...bookingData, date: e.target.value})}
+              required
+              className="form-input"
+            />
+          </div>
 
-    if (form.subcategory === 'Other' && !form.otherDetails.trim()) {
-      setError('Please describe your requirement for Other.');
-      return;
-    }
+          <div className="form-group">
+            <label>Preferred Time</label>
+            <input 
+              type="time" 
+              value={bookingData.time}
+              onChange={(e) => setBookingData({...bookingData, time: e.target.value})}
+              required
+              className="form-input"
+            />
+          </div>
 
-    setIsSubmitting(true);
-    setError('');
+          <div className="form-group">
+            <label>Additional Details (Optional)</label>
+            <textarea 
+              value={bookingData.description}
+              onChange={(e) => setBookingData({...bookingData, description: e.target.value})}
+              placeholder="Tell us more about your service needs..."
+              className="form-textarea"
+              rows="4"
+            />
+          </div>
 
-    const payload = buildBookingPayload({
-      customerId: customer.id,
-      customerName: customer.name,
-      phone: customer.phone,
-      category: form.category,
-      subcategory: form.subcategory,
-      address: form.address,
-      scheduledAt: form.scheduledAt,
-      paymentMethod: form.paymentMethod,
-      otherDetails: form.otherDetails.trim()
-    });
-
-    const response = await fetch(`${API_BASE}/api/bookings`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-
-    const data = await response.json();
-    setIsSubmitting(false);
-
-    if (response.ok) {
-      navigate('/bookings', { state: { booking: data, message: 'Booking confirmed. The owner will review and assign a worker shortly.' } });
-    } else {
-      setError(data.message || 'Unable to create booking right now.');
-    }
+          <button type="submit" className="btn-book-submit">Confirm Booking</button>
+        </form>
+      </div>
+    );
   }
 
   return (
-    <div className="page">
-      <div className="card">
-        <p className="eyebrow">Step {step} of 4</p>
-        <h2>{progressLabel}</h2>
+    <div className="booking-interface">
+      <div className="booking-greeting">
+        <h3>Welcome, {user.name}! 👋</h3>
+        <p>Ready to book a service?</p>
       </div>
 
-      {step === 1 ? (
-        <div className="card stack">
-          <label>Category</label>
-          {loadingCategories ? (
-            <p className="subtext">Loading available services…</p>
-          ) : categories.length === 0 ? (
-            <p className="subtext">No services are available right now.</p>
-          ) : (
-            <select value={form.categoryId} onChange={(e) => setForm({ ...form, categoryId: e.target.value, category: e.target.options[e.target.selectedIndex].text, subcategory: '', otherDetails: '' })}>
-              <option value="">Choose a category</option>
-              {categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}
-            </select>
-          )}
-          <label>Subcategory</label>
-          {selectedCategory ? (
-            <select value={form.subcategory} onChange={(e) => setForm({ ...form, subcategory: e.target.value, otherDetails: '' })}>
-              <option value="">Choose a subcategory</option>
-              {subcategoryOptions.map((subcategory) => <option key={subcategory} value={subcategory}>{subcategory}</option>)}
-            </select>
-          ) : (
-            <p className="subtext">Choose a category first.</p>
-          )}
-          <button className="primary-btn" onClick={() => setStep(form.subcategory ? 2 : 1)}>Next</button>
-        </div>
-      ) : null}
+      <div className="location-info">
+        📍 <strong>Salem, Tamil Nadu</strong>
+      </div>
 
-      {step === 2 ? (
-        <div className="card stack">
-          {form.subcategory === 'Other' ? (
-            <>
-              <label>Describe your requirement</label>
-              <textarea value={form.otherDetails} onChange={(e) => setForm({ ...form, otherDetails: e.target.value })} rows="4" placeholder="Tell us what you need" />
-              <label>Address</label>
-              <textarea value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} rows="4" placeholder="Enter your address" />
-            </>
-          ) : (
-            <>
-              <label>Address</label>
-              <textarea value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} rows="4" placeholder="Enter your address" />
-            </>
-          )}
-          <button className="primary-btn" onClick={() => setStep(3)}>Next</button>
+      <div className="booking-services">
+        <h4>Select Service to Book</h4>
+        <div className="book-services-grid">
+          {services.map(service => (
+            <div
+              key={service.id}
+              className="book-service-card"
+              onClick={() => setSelectedService(service)}
+            >
+              <div className="book-service-icon">{service.icon}</div>
+              <div className="book-service-name">{service.name}</div>
+            </div>
+          ))}
         </div>
-      ) : null}
+      </div>
 
-      {step === 3 ? (
-        <div className="card stack">
-          <label>Date & Time</label>
-          <input type="datetime-local" value={form.scheduledAt} onChange={(e) => setForm({ ...form, scheduledAt: e.target.value })} />
-          <label>Payment</label>
-          <select value={form.paymentMethod} onChange={(e) => setForm({ ...form, paymentMethod: e.target.value })}>
-            <option>Cash on Delivery</option>
-            <option>Online Payment</option>
-          </select>
-          <button className="primary-btn" onClick={() => setStep(4)}>Next</button>
-        </div>
-      ) : null}
-
-      {step === 4 ? (
-        <div className="card stack">
-          <h3>Confirm booking</h3>
-          <div className="summary-box">
-            <p><strong>Service:</strong> {form.category || 'Not selected'}</p>
-            <p><strong>Subcategory:</strong> {form.subcategory || 'Not selected'}</p>
-            <p><strong>Address:</strong> {form.address || 'Not provided'}</p>
-            <p><strong>Time:</strong> {form.scheduledAt || 'Not selected'}</p>
-            <p><strong>Payment:</strong> {form.paymentMethod}</p>
-          </div>
-          <p className="subtext">Your request will be sent to the owner for review and manual worker assignment.</p>
-          {error ? <p className="message">{error}</p> : null}
-          <button className="primary-btn" disabled={isSubmitting} onClick={submitBooking}>{isSubmitting ? 'Creating booking…' : 'Confirm booking'}</button>
-        </div>
-      ) : null}
+      <button className="btn-logout" onClick={onLogout}>Logout</button>
     </div>
   );
-}
+};
 
-function Bookings() {
-  const [bookings, setBookings] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const location = useLocation();
-
-  useEffect(() => {
-    const storage = localStorage.getItem('quickfix-customer');
-    if (storage) {
-      const parsed = JSON.parse(storage);
-      fetch(`${API_BASE}/api/bookings/customer/${parsed.id}`)
-        .then((response) => response.json())
-        .then((data) => {
-          setBookings(data || []);
-          setLoading(false);
-        });
-    } else {
-      setLoading(false);
-    }
-  }, []);
-
+// My Bookings View
+const MyBookingsView = ({ bookings, onClose }) => {
   return (
-    <div className="page">
-      <h2>Booking history</h2>
-      {loading ? (
-        <div className="card"><p className="subtext">Loading your bookings…</p></div>
-      ) : bookings.length === 0 ? (
-        <div className="card">
-          <p className="subtext">No bookings yet. Once you confirm a service, your booking history will appear here.</p>
-          <Link className="primary-btn" to="/book">Book a service</Link>
+    <div className="my-bookings-view">
+      <div className="bookings-header">
+        <button className="btn-back-nav" onClick={onClose}>← Back</button>
+        <h3>My Bookings</h3>
+      </div>
+
+      {bookings.length === 0 ? (
+        <div className="no-bookings-message">
+          <p>No bookings yet. Book your first service!</p>
         </div>
       ) : (
-        bookings.map((booking) => (
-          <div className="card stack" key={booking.id}>
-            <div className="booking-header">
-              <div>
-                <p><strong>{booking.subcategory}</strong></p>
-                <p className="subtext">{booking.address}</p>
+        <div className="bookings-list">
+          {bookings.map((booking, idx) => (
+            <div key={idx} className="booking-history-card">
+              <div className="booking-history-icon">{booking.icon}</div>
+              <div className="booking-history-details">
+                <h4>{booking.service}</h4>
+                <p>📅 {booking.date} at {booking.time}</p>
+                <p className="status-badge">Confirmed</p>
               </div>
-              <span className={`status-pill ${booking.status.toLowerCase().replace(/\s+/g, '-')}`}>{booking.status}</span>
             </div>
-            {booking.otherDetails ? <p className="subtext"><strong>Details:</strong> {booking.otherDetails}</p> : null}
-            <p className="subtext">Scheduled: {new Date(booking.scheduledAt).toLocaleString()}</p>
-            {booking.assignedWorkerName ? (
-              <div className="worker-card">
-                <img className="worker-photo" src={booking.assignedWorkerPhoto} alt={booking.assignedWorkerName} />
-                <div>
-                  <p><strong>{booking.assignedWorkerName}</strong></p>
-                  <p className="subtext">{booking.assignedWorkerExperience}</p>
-                  <p className="subtext">{booking.assignedWorkerPhone}</p>
-                  <p className="subtext">ETA: {booking.estimatedArrivalAt ? new Date(booking.estimatedArrivalAt).toLocaleString() : 'Preparing'}</p>
-                </div>
-              </div>
-            ) : (
-              <p className="subtext">Waiting for owner assignment.</p>
-            )}
-          </div>
-        ))
+          ))}
+        </div>
       )}
-      {location.state?.message ? <p className="message">{location.state.message}</p> : null}
     </div>
   );
-}
+};
 
+// Main App Component
 export default function App() {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [user, setUser] = useState(null);
+  const [currentView, setCurrentView] = useState('booking');
+  const [selectedService, setSelectedService] = useState(null);
+  const [bookings, setBookings] = useState([
+    {
+      service: 'Electrical Wiring',
+      icon: '⚡',
+      date: '2024-08-20',
+      time: '10:00 AM'
+    }
+  ]);
+
+  const handleLoginSuccess = (userData) => {
+    setUser(userData);
+    setIsLoggedIn(true);
+    setCurrentView('booking');
+  };
+
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+    setUser(null);
+    setCurrentView('booking');
+    setSelectedService(null);
+  };
+
+  const handleBookService = (bookingInfo) => {
+    setBookings([...bookings, bookingInfo]);
+    setCurrentView('booking');
+    alert('✅ Booking confirmed! We will contact you shortly.');
+  };
+
+  const handleSelectService = (service) => {
+    setSelectedService(service);
+    setCurrentView('subservice-overview');
+  };
+
+  // NOT LOGGED IN - Show Hero + Login
+  if (!isLoggedIn) {
+    return (
+      <div className="app-container">
+        <HeroBanner />
+        <LoginSection onLoginSuccess={handleLoginSuccess} />
+      </div>
+    );
+  }
+
+  // LOGGED IN - Show Top Bar + Current View
   return (
-    <div className="app-shell">
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/category/:id" element={<CategoryPage />} />
-        <Route path="/book" element={<BookingFlow />} />
-        <Route path="/bookings" element={<Bookings />} />
-      </Routes>
+    <div className="app-container app-logged-in">
+      <div className="top-bar">
+        <button className="btn-menu">☰</button>
+        <h1 className="app-title">QuickFix</h1>
+        <button 
+          className="btn-profile" 
+          onClick={() => setCurrentView(currentView === 'bookings' ? 'booking' : 'bookings')}
+        >
+          📋
+        </button>
+      </div>
+
+      {/* Services Overview - Educational */}
+      {currentView === 'service-overview' && (
+        <div className="container">
+          <ServicesOverview onSelectService={handleSelectService} />
+        </div>
+      )}
+
+      {/* Subservices Overview - Educational */}
+      {currentView === 'subservice-overview' && selectedService && (
+        <div className="container">
+          <SubServicesOverview 
+            service={selectedService}
+            onBack={() => setCurrentView('service-overview')}
+          />
+        </div>
+      )}
+
+      {/* My Bookings */}
+      {currentView === 'bookings' && (
+        <div className="container">
+          <MyBookingsView 
+            bookings={bookings}
+            onClose={() => setCurrentView('booking')}
+          />
+        </div>
+      )}
+
+      {/* Main Booking Interface */}
+      {currentView === 'booking' && (
+        <div className="container">
+          <BookingInterface 
+            user={user}
+            onBook={handleBookService}
+            onLogout={handleLogout}
+          />
+        </div>
+      )}
     </div>
   );
 }
