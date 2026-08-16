@@ -1,539 +1,188 @@
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+import React, { useState } from 'react';
+import './styles.css';
 
-html, body, #root {
-  width: 100%;
-  height: 100%;
-}
+export default function App() {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [user, setUser] = useState(null);
+  const [view, setView] = useState('dashboard');
+  const [selectedService, setSelectedService] = useState(null);
+  const [bookings, setBookings] = useState([]);
+  const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [showOTP, setShowOTP] = useState(false);
+  const [otp, setOtp] = useState('');
 
-body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background-color: #f8fafc;
-  color: #1e293b;
-  -webkit-font-smoothing: antialiased;
-}
+  const services = [
+    { id: 1, name: 'Electrical', icon: '⚡' },
+    { id: 2, name: 'Plumbing', icon: '🚰' },
+    { id: 3, name: 'AC & Appliances', icon: '❄️' },
+    { id: 4, name: 'Home Help', icon: '🏠' },
+    { id: 5, name: 'Home Renovation', icon: '🔧' },
+    { id: 6, name: 'Moving & Packing', icon: '📦' },
+    { id: 7, name: 'Security', icon: '🔐' }
+  ];
 
-.app {
-  width: 100%;
-  min-height: 100vh;
-  background-color: #f8fafc;
-}
+  const subservices = {
+    'Electrical': ['Electrician', 'Fan Installation', 'Light Installation', 'Switch & Socket Repair', 'House Wiring', 'Other'],
+    'Plumbing': ['Pipe Leakage', 'Tap Repair', 'Bathroom Fittings', 'Water Tank Cleaning', 'Motor Repair', 'Other'],
+    'AC & Appliances': ['AC Service', 'AC Installation', 'AC Repair', 'Washing Machine Repair', 'Refrigerator Repair', 'Other'],
+    'Home Help': ['Cleaning', 'Cooking', 'Maid / Home Assistance', 'Gardening', 'Other Home Help'],
+    'Home Renovation': ['Painting & Wall Work', 'Tiles & Flooring', 'Wallpaper', 'Carpentry & Woodwork', 'Other Home Renovation'],
+    'Moving & Packing': ['Movers & Packers', 'Packing & Unpacking', 'Home Shifting', 'Office Shifting', 'Driver on Demand', 'Other'],
+    'Security': ['CCTV Installation', 'CCTV Repair', 'Smart Lock Installation', 'Security Guard', 'Alarm System Setup', 'Other']
+  };
 
-/* Header */
-.header {
-  background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
-  color: white;
-  padding: 15px 20px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  box-shadow: 0 4px 12px rgba(30, 58, 138, 0.15);
-  position: sticky;
-  top: 0;
-  z-index: 100;
-}
+  const handleGetOTP = (e) => {
+    e.preventDefault();
+    if (name && phone.length === 10) {
+      setShowOTP(true);
+      alert('OTP sent to ' + phone);
+    }
+  };
 
-.header-left h1 {
-  font-size: 24px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-}
+  const handleVerifyOTP = (e) => {
+    e.preventDefault();
+    if (otp === '123456') {
+      setUser({ name, phone });
+      setIsLoggedIn(true);
+      setView('dashboard');
+    } else {
+      alert('Invalid OTP. Use: 123456');
+    }
+  };
 
-.header-right {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-}
+  const handleBook = (subservice) => {
+    setBookings([...bookings, { service: subservice, icon: selectedService.icon, date: new Date().toLocaleDateString() }]);
+    alert('✅ Booking confirmed!');
+    setSelectedService(null);
+    setView('dashboard');
+  };
 
-.history-btn, .logout-btn {
-  padding: 8px 16px;
-  border: none;
-  border-radius: 6px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
+  // LOGIN PAGE
+  if (!isLoggedIn) {
+    return (
+      <div className="app">
+        <div className="hero-banner">
+          <div className="hero-logo">
+            <img src="/quickfix-logo.png" alt="Logo" onError={(e) => e.target.style.display = 'none'} />
+          </div>
+          <h1 className="hero-title">QUICKFIX</h1>
+          <h2 className="hero-subtitle">Home services, made easy.</h2>
+          <p className="hero-description">Book trusted professionals for your home.</p>
+        </div>
 
-.history-btn {
-  background-color: #3b82f6;
-  color: white;
-  font-size: 18px;
-  padding: 8px 12px;
-}
-
-.history-btn:hover {
-  background-color: #2563eb;
-  transform: scale(1.08);
-}
-
-.logout-btn {
-  background-color: #ef4444;
-  color: white;
-}
-
-.logout-btn:hover {
-  background-color: #dc2626;
-}
-
-/* Hero Screen */
-.hero {
-  width: 100%;
-  height: 100vh;
-  background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #0ea5e9 100%);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 20px;
-}
-
-.hero-content {
-  text-align: center;
-  color: white;
-}
-
-.logo {
-  font-size: 100px;
-  margin-bottom: 40px;
-  animation: float 3s ease-in-out infinite;
-}
-
-@keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-20px); }
-}
-
-.hero h2 {
-  font-size: 48px;
-  margin-bottom: 50px;
-  font-weight: 300;
-  letter-spacing: 1.5px;
-  line-height: 1.2;
-}
-
-.login-btn {
-  padding: 16px 50px;
-  font-size: 16px;
-  background-color: white;
-  color: #1e3a8a;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 700;
-  transition: all 0.3s ease;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-}
-
-.login-btn:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
-}
-
-.login-btn:active {
-  transform: translateY(-2px);
-}
-
-/* Login Screen */
-.login-container {
-  width: 100%;
-  min-height: 100vh;
-  background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 20px;
-}
-
-.login-box {
-  background-color: white;
-  border-radius: 12px;
-  padding: 45px 40px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.12);
-  width: 100%;
-  max-width: 420px;
-  animation: slideUp 0.4s ease-out;
-}
-
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.login-box h2 {
-  color: #1e3a8a;
-  margin-bottom: 10px;
-  font-size: 32px;
-  font-weight: 700;
-}
-
-.login-box p {
-  color: #64748b;
-  margin-bottom: 30px;
-  font-size: 14px;
-}
-
-.otp-input {
-  width: 100%;
-  padding: 14px;
-  border: 2px solid #e2e8f0;
-  border-radius: 8px;
-  font-size: 20px;
-  text-align: center;
-  letter-spacing: 12px;
-  margin-bottom: 25px;
-  transition: all 0.3s ease;
-  font-weight: 600;
-}
-
-.otp-input:focus {
-  outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
-}
-
-.verify-btn {
-  width: 100%;
-  padding: 13px;
-  background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-size: 16px;
-  font-weight: 700;
-  cursor: pointer;
-  margin-bottom: 12px;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(30, 58, 138, 0.2);
-}
-
-.verify-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(30, 58, 138, 0.3);
-}
-
-.verify-btn:active {
-  transform: translateY(0);
-}
-
-.back-btn {
-  width: 100%;
-  padding: 11px;
-  background-color: #e2e8f0;
-  color: #475569;
-  border: none;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.back-btn:hover {
-  background-color: #cbd5e1;
-}
-
-/* Services Screen */
-.services-container {
-  padding: 30px 20px;
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-.location-bar {
-  background: linear-gradient(135deg, #e0e7ff 0%, #dbeafe 100%);
-  color: #1e3a8a;
-  padding: 12px 20px;
-  border-radius: 8px;
-  margin-bottom: 30px;
-  font-weight: 600;
-  font-size: 15px;
-  box-shadow: 0 2px 8px rgba(30, 58, 138, 0.08);
-}
-
-.services-title {
-  color: #1e3a8a;
-  margin-bottom: 35px;
-  font-size: 32px;
-  font-weight: 700;
-}
-
-.services-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 20px;
-  margin-bottom: 20px;
-}
-
-.service-card {
-  background-color: white;
-  border: 2px solid #1e3a8a;
-  border-radius: 12px;
-  padding: 30px 20px;
-  text-align: center;
-  cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-}
-
-.service-card:hover {
-  background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
-  color: white;
-  transform: translateY(-6px);
-  box-shadow: 0 12px 32px rgba(30, 58, 138, 0.25);
-  border-color: transparent;
-}
-
-.service-icon {
-  font-size: 45px;
-  display: block;
-  margin-bottom: 12px;
-}
-
-.service-name {
-  font-size: 15px;
-  font-weight: 700;
-  letter-spacing: 0.3px;
-}
-
-/* Subcategories Screen */
-.subcategories-container {
-  padding: 30px 20px;
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-.subcategories-title {
-  color: #1e3a8a;
-  margin-bottom: 35px;
-  font-size: 32px;
-  font-weight: 700;
-}
-
-.subcategories-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 12px;
-  margin-bottom: 25px;
-}
-
-.subcategory-btn {
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-  color: white;
-  border: none;
-  padding: 16px 18px;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
-  text-align: center;
-  word-wrap: break-word;
-}
-
-.subcategory-btn:hover {
-  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-  transform: translateY(-4px);
-  box-shadow: 0 8px 24px rgba(59, 130, 246, 0.35);
-}
-
-.subcategory-btn:active {
-  transform: translateY(-1px);
-}
-
-/* Booking Screen */
-.booking-container {
-  padding: 30px 20px;
-  max-width: 700px;
-  margin: 0 auto;
-}
-
-.booking-card {
-  background-color: white;
-  border-radius: 12px;
-  padding: 40px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
-  margin-top: 20px;
-  animation: slideUp 0.4s ease-out;
-}
-
-.booking-card h2 {
-  color: #1e3a8a;
-  margin-bottom: 35px;
-  font-size: 28px;
-  font-weight: 700;
-}
-
-.booking-details {
-  margin-bottom: 35px;
-  background-color: #f1f5f9;
-  padding: 20px;
-  border-radius: 8px;
-}
-
-.booking-details p {
-  padding: 12px 0;
-  color: #334155;
-  font-size: 15px;
-}
-
-.booking-details strong {
-  color: #1e3a8a;
-  font-weight: 700;
-}
-
-.book-btn {
-  width: 100%;
-  padding: 14px;
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-size: 16px;
-  font-weight: 700;
-  cursor: pointer;
-  margin-bottom: 12px;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
-}
-
-.book-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.3);
-}
-
-/* History Screen */
-.history-container {
-  padding: 30px 20px;
-  max-width: 900px;
-  margin: 0 auto;
-}
-
-.history-container h2 {
-  color: #1e3a8a;
-  margin-bottom: 30px;
-  font-size: 32px;
-  font-weight: 700;
-}
-
-.empty-history {
-  text-align: center;
-  color: #94a3b8;
-  padding: 60px 20px;
-  font-size: 16px;
-}
-
-.history-list {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  margin-bottom: 25px;
-}
-
-.history-item {
-  background-color: white;
-  border-left: 5px solid #3b82f6;
-  border-radius: 8px;
-  padding: 22px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  transition: all 0.3s ease;
-}
-
-.history-item:hover {
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
-  transform: translateX(4px);
-}
-
-.history-item h3 {
-  color: #1e3a8a;
-  margin-bottom: 12px;
-  font-size: 16px;
-  font-weight: 700;
-}
-
-.history-item p {
-  color: #64748b;
-  padding: 6px 0;
-  font-size: 14px;
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-  .services-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 15px;
+        <div className="login-box">
+          <h3>Customer Login</h3>
+          {!showOTP ? (
+            <form onSubmit={handleGetOTP}>
+              <input type="text" placeholder="Your Name" value={name} onChange={(e) => setName(e.target.value)} required />
+              <input type="tel" placeholder="Phone Number" maxLength="10" value={phone} onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))} required />
+              <button type="submit" className="btn-otp">Get OTP</button>
+            </form>
+          ) : (
+            <form onSubmit={handleVerifyOTP}>
+              <p>Enter OTP sent to {phone}</p>
+              <input type="text" placeholder="Enter 6-digit OTP" maxLength="6" value={otp} onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))} required />
+              <button type="submit" className="btn-otp">Verify & Login</button>
+              <button type="button" className="btn-back" onClick={() => { setShowOTP(false); setOtp(''); }}>Back</button>
+            </form>
+          )}
+        </div>
+      </div>
+    );
   }
 
-  .hero h2 {
-    font-size: 36px;
+  // BOOKING HISTORY VIEW
+  if (view === 'bookings') {
+    return (
+      <div className="app">
+        <div className="top-bar">
+          <button className="btn-menu">☰</button>
+          <h1 className="app-title">QuickFix</h1>
+          <button className="btn-profile" onClick={() => setView('dashboard')}>📋</button>
+        </div>
+        <div className="container">
+          <div className="bookings-box">
+            <button className="btn-back" onClick={() => setView('dashboard')}>← Back</button>
+            <h3>My Bookings</h3>
+            {bookings.length === 0 ? (
+              <p>No bookings yet!</p>
+            ) : (
+              bookings.map((b, i) => (
+                <div key={i} className="booking-item">
+                  <span>{b.icon}</span>
+                  <div>
+                    <h4>{b.service}</h4>
+                    <p>Booked on {b.date}</p>
+                    <span className="badge">✓ Confirmed</span>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+    );
   }
 
-  .logo {
-    font-size: 70px;
+  // SUBCATEGORY VIEW
+  if (view === 'subcategory' && selectedService) {
+    return (
+      <div className="app">
+        <div className="top-bar">
+          <button className="btn-menu">☰</button>
+          <h1 className="app-title">QuickFix</h1>
+          <button className="btn-profile" onClick={() => setView('bookings')}>📋</button>
+        </div>
+        <div className="container">
+          <div className="subcat-box">
+            <button className="btn-back" onClick={() => setView('dashboard')}>← Back</button>
+            <h3>{selectedService.name}</h3>
+            <p className="subcat-subtitle">Select the service you need.</p>
+            <div className="subcat-buttons">
+              {(subservices[selectedService.name] || []).map((sub, i) => (
+                <button key={i} className="subcat-btn" onClick={() => handleBook(sub)}>
+                  {sub}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
-  .subcategories-grid {
-    grid-template-columns: 1fr;
-  }
+  // DASHBOARD
+  return (
+    <div className="app">
+      <div className="top-bar">
+        <button className="btn-menu">☰</button>
+        <h1 className="app-title">QuickFix</h1>
+        <button className="btn-profile" onClick={() => setView('bookings')}>📋</button>
+      </div>
 
-  .header {
-    padding: 12px 15px;
-  }
+      <div className="container">
+        <div className="greeting-box">
+          <h3>Welcome, {user.name}! 👋</h3>
+          <p>Ready to book a service?</p>
+        </div>
 
-  .header-left h1 {
-    font-size: 20px;
-  }
+        <div className="location">📍 Salem, Tamil Nadu</div>
 
-  .login-box {
-    padding: 35px 25px;
-  }
+        <div className="services-box">
+          <h4>Select Service to Book</h4>
+          <div className="services-grid">
+            {services.map(s => (
+              <button key={s.id} className="service-btn" onClick={() => { setSelectedService(s); setView('subcategory'); }}>
+                <div className="service-icon">{s.icon}</div>
+                <div className="service-name">{s.name}</div>
+              </button>
+            ))}
+          </div>
+        </div>
 
-  .booking-card {
-    padding: 25px;
-  }
-
-  .services-title,
-  .subcategories-title,
-  .history-container h2 {
-    font-size: 26px;
-  }
-}
-
-@media (max-width: 480px) {
-  .services-grid {
-    grid-template-columns: 1fr;
-    gap: 12px;
-  }
-
-  .hero h2 {
-    font-size: 28px;
-    margin-bottom: 30px;
-  }
-
-  .logo {
-    font-size: 50px;
-  }
-
-  .login-btn {
-    padding: 14px 35px;
-    font-size: 15px;
-  }
-
-  .header-right {
-    gap: 8px;
-  }
-
-  .history-btn, .logout-btn {
-    padding: 6px 12px;
-    font-size: 12px;
-  }
+        <button className="btn-logout" onClick={() => { setIsLoggedIn(false); setUser(null); }}>Logout</button>
+      </div>
+    </div>
+  );
 }

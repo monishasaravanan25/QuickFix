@@ -1,253 +1,237 @@
-import React, { useState } from 'react';
-import './styles.css';
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Montserrat:wght@700&display=swap');
 
-const App = () => {
-  const [screen, setScreen] = useState('hero');
-  const [otp, setOtp] = useState('');
-  const [selectedService, setSelectedService] = useState(null);
-  const [selectedSubcategory, setSelectedSubcategory] = useState(null);
-  const [bookingHistory, setBookingHistory] = useState([]);
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Poppins', sans-serif; background: #f5f5f5; }
 
-  const services = [
-    { id: 1, name: 'Electrical', icon: '⚡' },
-    { id: 2, name: 'Plumbing', icon: '🔧' },
-    { id: 3, name: 'AC', icon: '❄️' },
-    { id: 4, name: 'Home Help', icon: '🏠' },
-    { id: 5, name: 'Renovation', icon: '🔨' },
-    { id: 6, name: 'Moving', icon: '📦' },
-    { id: 7, name: 'Security', icon: '🔒' }
-  ];
+.app { min-height: 100vh; background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%); }
 
-  const subcategories = {
-    'Electrical': ['Electrician', 'Fan Installation', 'Light Installation', 'Switch Repair', 'House Wiring', 'Other'],
-    'Plumbing': ['Pipe Leakage', 'Tap Repair', 'Bathroom Fittings', 'Water Tank', 'Motor Repair', 'Other'],
-    'AC': ['AC Service', 'AC Installation', 'AC Repair', 'Washing Machine', 'Refrigerator', 'Other'],
-    'Home Help': ['Cleaning', 'Cooking', 'Maid', 'Gardening', 'Other'],
-    'Renovation': ['Painting', 'Tiles', 'Wallpaper', 'Carpentry', 'Other'],
-    'Moving': ['Movers', 'Packing', 'Home Shift', 'Office Shift', 'Driver', 'Other'],
-    'Security': ['CCTV Install', 'CCTV Repair', 'Smart Lock', 'Security Guard', 'Alarm', 'Other']
-  };
+/* HERO BANNER */
+.hero-banner {
+  background: linear-gradient(135deg, #0052CC 0%, #0042A0 100%);
+  padding: 40px 20px;
+  text-align: center;
+  border-radius: 0 0 24px 24px;
+}
 
-  const handleVerifyOtp = () => {
-    if (otp === '123456') {
-      setScreen('services');
-      setOtp('');
-    } else {
-      alert('Invalid OTP. Please try 123456');
-    }
-  };
+.hero-logo img { max-width: 80px; max-height: 80px; margin-bottom: 12px; }
 
-  const handleServiceClick = (service) => {
-    setSelectedService(service);
-    setScreen('subcategories');
-  };
+.hero-title {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 4px;
+  color: white;
+  margin-bottom: 12px;
+}
 
-  const handleSubcategoryClick = (subcategory) => {
-    setSelectedSubcategory(subcategory);
-    setScreen('booking');
-  };
+.hero-subtitle {
+  font-family: 'Poppins', sans-serif;
+  font-size: 32px;
+  font-weight: 700;
+  color: white;
+  margin-bottom: 12px;
+}
 
-  const handleBook = () => {
-    const booking = {
-      id: Date.now(),
-      service: selectedService.name,
-      subcategory: selectedSubcategory,
-      date: new Date().toLocaleDateString(),
-      time: new Date().toLocaleTimeString(),
-      location: 'Salem'
-    };
-    setBookingHistory([booking, ...bookingHistory]);
-    alert('✅ Booking confirmed!');
-    setScreen('services');
-    setSelectedService(null);
-    setSelectedSubcategory(null);
-  };
+.hero-description {
+  font-family: 'Poppins', sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  color: white;
+}
 
-  const handleLogout = () => {
-    setScreen('hero');
-    setOtp('');
-    setSelectedService(null);
-    setSelectedSubcategory(null);
-  };
+/* LOGIN */
+.login-box {
+  background: white;
+  margin: 30px auto;
+  padding: 30px;
+  border-radius: 16px;
+  max-width: 500px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+}
 
-  return (
-    <div className="app">
-      {/* Header */}
-      {screen !== 'hero' && (
-        <header className="header">
-          <div className="header-left">
-            <h1>QuickFix</h1>
-          </div>
-          <div className="header-right">
-            <button 
-              className="history-btn"
-              onClick={() => setScreen('history')}
-              title="Booking History"
-            >
-              📋
-            </button>
-            <button 
-              className="logout-btn"
-              onClick={handleLogout}
-            >
-              Logout
-            </button>
-          </div>
-        </header>
-      )}
+.login-box h3 { font-size: 24px; font-weight: 700; margin-bottom: 24px; }
 
-      {/* Hero Screen */}
-      {screen === 'hero' && (
-        <div className="hero">
-          <div className="hero-content">
-            <div className="logo">⚙️</div>
-            <h2>Home services, made easy</h2>
-            <button 
-              className="login-btn"
-              onClick={() => setScreen('login')}
-            >
-              Login with OTP
-            </button>
-          </div>
-        </div>
-      )}
+.login-box form { display: flex; flex-direction: column; gap: 16px; }
 
-      {/* OTP Login Screen */}
-      {screen === 'login' && (
-        <div className="login-container">
-          <div className="login-box">
-            <h2>Login</h2>
-            <p>Enter OTP (Test: 123456)</p>
-            <input
-              type="text"
-              placeholder="Enter 6-digit OTP"
-              value={otp}
-              onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-              className="otp-input"
-              maxLength="6"
-              autoFocus
-            />
-            <button 
-              className="verify-btn"
-              onClick={handleVerifyOtp}
-            >
-              Verify OTP
-            </button>
-            <button 
-              className="back-btn"
-              onClick={() => setScreen('hero')}
-            >
-              Back
-            </button>
-          </div>
-        </div>
-      )}
+.login-box input {
+  padding: 14px;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  font-size: 16px;
+  font-family: 'Poppins', sans-serif;
+}
 
-      {/* Services Screen */}
-      {screen === 'services' && (
-        <div className="services-container">
-          <div className="location-bar">📍 Salem</div>
-          <h2 className="services-title">Select a Service</h2>
-          <div className="services-grid">
-            {services.map(service => (
-              <div
-                key={service.id}
-                className="service-card"
-                onClick={() => handleServiceClick(service)}
-              >
-                <span className="service-icon">{service.icon}</span>
-                <span className="service-name">{service.name}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+.btn-otp {
+  padding: 14px;
+  background: linear-gradient(135deg, #0052CC 0%, #003399 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 16px;
+}
 
-      {/* Subcategories Screen */}
-      {screen === 'subcategories' && selectedService && (
-        <div className="subcategories-container">
-          <div className="location-bar">📍 Salem</div>
-          <h2 className="subcategories-title">{selectedService.name}</h2>
-          <div className="subcategories-grid">
-            {subcategories[selectedService.name].map((subcat, index) => (
-              <button
-                key={index}
-                className="subcategory-btn"
-                onClick={() => handleSubcategoryClick(subcat)}
-              >
-                {subcat}
-              </button>
-            ))}
-          </div>
-          <button 
-            className="back-btn"
-            onClick={() => setScreen('services')}
-            style={{ marginTop: '20px' }}
-          >
-            ← Back to Services
-          </button>
-        </div>
-      )}
+.btn-otp:hover { transform: translateY(-2px); }
 
-      {/* Booking Screen */}
-      {screen === 'booking' && selectedService && selectedSubcategory && (
-        <div className="booking-container">
-          <div className="location-bar">📍 Salem</div>
-          <div className="booking-card">
-            <h2>Confirm Booking</h2>
-            <div className="booking-details">
-              <p><strong>Service:</strong> {selectedService.name}</p>
-              <p><strong>Category:</strong> {selectedSubcategory}</p>
-              <p><strong>Location:</strong> Salem</p>
-              <p><strong>Date:</strong> {new Date().toLocaleDateString()}</p>
-              <p><strong>Time:</strong> {new Date().toLocaleTimeString()}</p>
-            </div>
-            <button 
-              className="book-btn"
-              onClick={handleBook}
-            >
-              ✓ Confirm Booking
-            </button>
-            <button 
-              className="back-btn"
-              onClick={() => setScreen('subcategories')}
-            >
-              ← Back
-            </button>
-          </div>
-        </div>
-      )}
+.btn-back {
+  padding: 12px;
+  background: #f3f4f6;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 600;
+}
 
-      {/* Booking History Screen */}
-      {screen === 'history' && (
-        <div className="history-container">
-          <div className="location-bar">📍 Salem</div>
-          <h2>📋 Booking History</h2>
-          {bookingHistory.length === 0 ? (
-            <p className="empty-history">No bookings yet. Start by selecting a service!</p>
-          ) : (
-            <div className="history-list">
-              {bookingHistory.map(booking => (
-                <div key={booking.id} className="history-item">
-                  <h3>{booking.service} - {booking.subcategory}</h3>
-                  <p>📅 <strong>Date:</strong> {booking.date}</p>
-                  <p>🕐 <strong>Time:</strong> {booking.time}</p>
-                  <p>📍 <strong>Location:</strong> {booking.location}</p>
-                </div>
-              ))}
-            </div>
-          )}
-          <button 
-            className="back-btn"
-            onClick={() => setScreen('services')}
-            style={{ marginTop: '20px' }}
-          >
-            ← Back to Services
-          </button>
-        </div>
-      )}
-    </div>
-  );
-};
+/* TOP BAR */
+.top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  background: white;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
 
-export default App;
+.btn-menu, .btn-profile {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+}
+
+.app-title {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 24px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #0052CC, #FF6B35);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.container { max-width: 800px; margin: 0 auto; padding: 20px; }
+
+/* GREETING & LOCATION */
+.greeting-box {
+  background: linear-gradient(135deg, #0052CC, #003399);
+  color: white;
+  padding: 24px;
+  border-radius: 16px;
+  margin-bottom: 20px;
+}
+
+.greeting-box h3 { font-family: 'Montserrat', sans-serif; font-size: 24px; margin: 0 0 8px 0; }
+
+.location {
+  background: white;
+  padding: 12px 20px;
+  margin-bottom: 20px;
+  border-radius: 12px;
+  text-align: center;
+  font-weight: 600;
+  color: #0052CC;
+}
+
+/* SERVICES */
+.services-box {
+  background: white;
+  padding: 24px;
+  border-radius: 16px;
+  margin-bottom: 20px;
+}
+
+.services-box h4 { font-size: 18px; font-weight: 700; margin-bottom: 16px; }
+
+.services-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.service-btn {
+  background: linear-gradient(135deg, #F0F7FF 0%, #E0EEFF 100%);
+  border: 2px solid transparent;
+  padding: 16px;
+  border-radius: 12px;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.service-btn:hover {
+  border-color: #0052CC;
+  transform: scale(1.05);
+}
+
+.service-icon { font-size: 36px; margin-bottom: 8px; }
+.service-name { font-weight: 600; color: #0052CC; }
+
+/* SUBCATEGORIES */
+.subcat-box {
+  background: white;
+  padding: 24px;
+  border-radius: 16px;
+}
+
+.subcat-box h3 { font-family: 'Montserrat', sans-serif; font-size: 24px; margin-bottom: 8px; }
+
+.subcat-subtitle { color: #6b7280; margin-bottom: 20px; }
+
+.subcat-buttons { display: flex; flex-direction: column; gap: 12px; }
+
+.subcat-btn {
+  background: #0052CC;
+  color: white;
+  border: none;
+  padding: 14px;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 16px;
+  font-family: 'Poppins', sans-serif;
+}
+
+.subcat-btn:hover { background: #003399; }
+
+/* BOOKINGS */
+.bookings-box {
+  background: white;
+  padding: 24px;
+  border-radius: 16px;
+}
+
+.bookings-box h3 { font-family: 'Montserrat', sans-serif; font-size: 24px; margin: 16px 0; }
+
+.booking-item {
+  background: linear-gradient(135deg, #F0F7FF 0%, #E0EEFF 100%);
+  padding: 16px;
+  border-radius: 12px;
+  border-left: 4px solid #0052CC;
+  margin-bottom: 12px;
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.booking-item span:first-child { font-size: 36px; }
+.booking-item h4 { font-weight: 600; margin-bottom: 4px; }
+.booking-item p { font-size: 13px; color: #6b7280; }
+.badge { display: inline-block; background: #10B981; color: white; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; margin-top: 4px; }
+
+/* LOGOUT */
+.btn-logout {
+  width: 100%;
+  padding: 12px;
+  background: #f3f4f6;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 600;
+  margin-top: 20px;
+}
+
+.btn-logout:hover { background: #e5e7eb; }
